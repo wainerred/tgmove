@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Миграция Telegram-ботов — Переезд на зарубежные серверы</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-large {
+            padding: 16px 36px;
+            font-size: 1.1rem;
+        }
+
+        /* Badges */
+        .badges {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            background: linear-gradient(180deg, var(--white) 0%, var(--light) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            color: var(--dark);
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .server-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .server-box {
+            width: 280px;
+            height: 60px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .server-box:nth-child(2) { animation-delay: 0.5s; }
+        .server-box:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .server-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .server-text {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .arrow-down {
+            font-size: 2rem;
+            color: var(--primary);
+            margin: 8px 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        .telegram-cloud {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #229ed9, #1c8bc1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            box-shadow: var(--shadow-lg);
+            margin-top: 16px;
+        }
+
+        /* Problems */
+        .problems {
+            padding: 80px 0;
+            background: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--secondary);
+        }
+
+        .problems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .problem-card {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .problem-icon {
+            width: 56px;
+            height: 56px;
+            background: #fee2e2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .problem-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+
+        .problem-card p {
+            color: var(--secondary);
+            line-height: 1.6;
+        }
+
+        /* Services */
+        .services {
+            padding: 80px 0;
+            background: var(--light);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .service-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .service-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .service-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .service-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+
+        .service-card p {
+            color: var(--secondary);
+            line-height: 1.6;
+        }
+
+        /* Why Us */
+        .why-us {
+            padding: 80px 0;
+            background: var(--white);
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .why-card {
+            text-align: center;
+            padding: 40px 24px;
+            border-radius: 16px;
+            background: var(--light);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .why-card:hover {
+            background: var(--white);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .why-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.75rem;
+        }
+
+        .why-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--dark);
+        }
+
+        .why-card p {
+            color: var(--secondary);
+            line-height: 1.6;
+        }
+
+        /* Pricing */
+        .pricing {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .pricing h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .pricing-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .pricing-label {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .pricing-desc {
+            opacity: 0.8;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        /* Form */
+        .contact {
+            padding: 80px 0;
+            background: var(--light);
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 48px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .form-container h2 {
+            text-align: center;
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .form-container .subtitle {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: var(--white);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-hint {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-top: 6px;
+        }
+
+        .form-submit {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand {
+            max-width: 320px;
+        }
+
+        .footer-brand .logo {
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            opacity: 0.7;
+            line-height: 1.6;
+        }
+
+        .footer h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-contact a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .footer-contact a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 24px;
+            text-align: center;
+            opacity: 0.5;
+            font-size: 0.875rem;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero-visual {
+                order: -1;
+            }
+
+            .server-box {
+                width: 240px;
+            }
+
+            .nav {
+                display: none;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .form-container {
+                padding: 32px 24px;
+            }
+
+            .pricing-card {
+                padding: 32px 24px;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection */
+        ::selection {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="#" class="logo">
+                    <div class="logo-icon">🚀</div>
+                    <span>BotRelocate</span>
+                </a>
+                <nav class="nav">
+                    <a href="#problems">Проблемы</a>
+                    <a href="#services">Услуги</a>
+                    <a href="#why">Почему мы</a>
+                    <a href="#contact">Контакты</a>
+                </nav>
+                <a href="#contact" class="btn btn-primary">Заказать расчёт</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="badges">
+                        <span class="badge badge-blue">🌍 Работаем с РФ и СНГ</span>
+                        <span class="badge badge-green">✓ Без посредников</span>
+                    </div>
+                    <h1>Миграция Telegram-ботов <span>на зарубежные серверы</span></h1>
+                    <p class="hero-subtitle">
+                        Восстановим стабильную работу ваших ботов. Перенесём код, настроим инфраструктуру и запустим 
+                        на надёжных зарубежных хостингах — берём все технические задачи на себя.
+                    </p>
+                    <div class="hero-cta">
+                        <a href="#contact" class="btn btn-primary btn-large">Заказать бесплатный расчёт</a>
+                        <a href="#services" class="btn btn-outline btn-large">Что входит в услугу</a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="server-stack">
+                        <div class="server-box">
+                            <div class="server-led"></div>
+                            <span class="server-text">Российский сервер</span>
+                            <span style="margin-left:auto; font-size:1.2rem;">⚠️</span>
+                        </div>
+                        <div class="arrow-down">↓</div>
+                        <div class="server-box">
+                            <div class="server-led"></div>
+                            <span class="server-text">GitHub / GitLab</span>
+                            <span style="margin-left:auto; font-size:1.2rem;">🔄</span>
+                        </div>
+                        <div class="server-box">
+                            <div class="server-led"></div>
+                            <span class="server-text">CI/CD Pipeline</span>
+                            <span style="margin-left:auto; font-size:1.2rem;">⚙️</span>
+                        </div>
+                        <div class="arrow-down">↓</div>
+                        <div class="server-box">
+                            <div class="server-led"></div>
+                            <span class="server-text">Зарубежный VPS</span>
+                            <span style="margin-left:auto; font-size:1.2rem;">✓</span>
+                        </div>
+                        <div class="telegram-cloud">✈️</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problems -->
+    <section class="problems" id="problems">
+        <div class="container">
+            <div class="section-header">
+                <h2>С какими проблемами сталкиваются владельцы ботов</h2>
+                <p>Нестабильность российской инфраструктуры для Telegram API приводит к потере клиентов и прибыли</p>
+            </div>
+            <div class="problems-grid">
+                <div class="problem-card">
+                    <div class="problem-icon">🚫</div>
+                    <h3>Блокировки и ограничения</h3>
+                    <p>Telegram API периодически недоступен с российских IP-адресов. Бот перестаёт отвечать на сообщения, теряет заказы.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">🐌</div>
+                    <h3>Замедление отклика</h3>
+                    <p>Высокий пинг и потери пакетов при обращении к api.telegram.org. Пользователи ждут ответ по 5–10 секунд.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">💸</div>
+                    <h3>Прямые убытки</h3>
+                    <p>Каждая минута простоя — это недополученная выручка, недовольные клиенты и репутационные риски.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">😰</div>
+                    <h3>Нет своего DevOps</h3>
+                    <p>Некому быстро разобраться в инфраструктуре, настроить прокси или перенести сервер в другое место.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-header">
+                <h2>Что входит в услугу</h2>
+                <p>Полный цикл миграции под ключ — от аудита кода до запуска в продакшене</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-number">01</div>
+                    <h3>Перенос кодовой базы</h3>
+                    <p>Создаём репозиторий на GitHub или GitLab, переносим исходный код, настраиваем .gitignore и структуру проекта. Ваш код будет под контролем версий.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-number">02</div>
+                    <h3>Документация по сервисам</h3>
+                    <p>Фиксируем все зависимости, переменные окружения, используемые API и базы данных. Составляем README для будущей поддержки.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-number">03</div>
+                    <h3>Настройка CI/CD</h3>
+                    <p>Пишем пайплайн для автоматической сборки и деплоя. Любое изменение в коде само попадает на сервер — без ручных действий.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-number">04</div>
+                    <h3>Аренда хостинга под ключ</h3>
+                    <p>Подбираем и оплачиваем зарубежный VPS или облачный сервер под вашу нагрузку. Регистрация, оплата, первичная настройка — всё берём на себя.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-number">05</div>
+                    <h3>Перенос и запуск</h3>
+                    <p>Разворачиваем бота на новом хосте, мигрируем базы данных, настраиваем домены и SSL. Проводим полное тестирование работоспособности.</p>
+                </div>
+                <div class="service-card" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
+                    <div class="service-number" style="background: var(--primary-dark);">+</div>
+                    <h3>Пост-миграционная поддержка</h3>
+                    <p><strong>3 дня бесплатной поддержки</strong> после запуска. Помогаем с мелкими доработками, отвечаем на вопросы, следим за стабильностью.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Us -->
+    <section class="why-us" id="why">
+        <div class="container">
+            <div class="section-header">
+                <h2>Почему именно мы</h2>
+                <p>Работаем с бизнесом, у которого нет собственного IT-отдела</p>
+            </div>
+            <div class="why-grid">
+                <div class="why-card">
+                    <div class="why-icon">🛡️</div>
+                    <h3>Не нужен свой DevOps</h3>
+                    <p>Мы — ваша внешняя команда инфраструктуры. Не требуем штатного сисадмина или программиста для сопровождения.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">🔄</div>
+                    <h3>Бесшовный переезд</h3>
+                    <p>Минимальное время простоя — переносим и тестируем на новом сервере, пока старый работает. Переключаем за считанные минуты.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">🌐</div>
+                    <h3>Помощь с доменами и прокси</h3>
+                    <p>Настроим Webhook, подключим прокси при необходимости, поможем с DNS и SSL-сертификатами.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon">🤝</div>
+                    <h3>Поддержка 3 дня после запуска</h3>
+                    <p>Не бросаем после миграции. На связи, чтобы убедиться, что всё работает идеально и ответить на вопросы.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing">
+        <div class="container">
+            <h2>Стоимость миграции</h2>
+            <p class="pricing-subtitle">Индивидуальный расчёт под вашего бота</p>
+            <div class="pricing-card">
+                <div class="pricing-label">Под ключ</div>
+                <p class="pricing-desc">
+                    Стоимость зависит от сложности бота, объёма данных и требуемой инфраструктуры. 
+                    Оставьте заявку — рассчитаем точную цену и сроки в течение часа.
+                </p>
+                <a href="#contact" class="btn btn-primary btn-large" style="background: white; color: var(--primary);">Заказать расчёт стоимости</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="form-container">
+                <h2>Заказать бесплатный расчёт</h2>
+                <p class="subtitle">Расскажите о вашем боте — подготовим план и смету</p>
+                <form id="leadForm">
+                    <div class="form-group">
+                        <label for="name">Ваше имя</label>
+                        <input type="text" id="name" name="name" placeholder="Иван Петров" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact">Телефон или Telegram</label>
+                        <input type="text" id="contactInput" name="contact" placeholder="+7 (999) 000-00-00 или @username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="load">Примерная нагрузка бота</label>
+                        <select id="load" name="load" required>
+                            <option value="" disabled selected>Выберите вариант</option>
+                            <option value="low">До 100 пользователей / до 1 RPS</option>
+                            <option value="medium">100–1000 пользователей / 1–10 RPS</option>
+                            <option value="high">1000–10 000 пользователей / 10–100 RPS</option>
+                            <option value="enterprise">Более 10 000 пользователей / 100+ RPS</option>
+                            <option value="unknown">Не знаю, нужна консультация</option>
+                        </select>
+                        <p class="form-hint">RPS — запросов в секунду к API Telegram</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="details">Дополнительная информация</label>
+                        <textarea id="details" name="details" placeholder="На каком языке написан бот? Есть ли база данных? Какие проблемы испытываете сейчас?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-large form-submit">Отправить заявку</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <div class="logo-icon">🚀</div>
+                        <span>BotRelocate</span>
+                    </a>
+                    <p>Миграция Telegram-ботов на зарубежные серверы под ключ. Работаем с бизнесом из РФ и СНГ без посредников.</p>
+                </div>
+                <div class="footer-nav">
+                    <h4>Навигация</h4>
+                    <ul class="footer-links">
+                        <li><a href="#problems">Проблемы</a></li>
+                        <li><a href="#services">Услуги</a></li>
+                        <li><a href="#why">Почему мы</a></li>
+                        <li><a href="#contact">Расчёт стоимости</a></li>
+                    </ul>
+                </div>
+                <div class="footer-nav">
+                    <h4>Контакты</h4>
+                    <div class="footer-contact">
+                        <a href="https://t.me/migrate_bot_help" target="_blank">
+                            <span>📱</span> Telegram: @migrate_bot_help
+                        </a>
+                        <a href="mailto:hello@botrelocate.dev">
+                            <span>✉️</span> hello@botrelocate.dev
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 BotRelocate. Все права защищены. Работаем с РФ и СНГ. Без посредников.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('leadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                contact: document.getElementById('contactInput').value,
+                load: document.getElementById('load').value,
+                details: document.getElementById('details').value,
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('Заявка получена:', formData);
+            alert('Заявка принята, ответ в течение часа');
+
+            this.reset();
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
