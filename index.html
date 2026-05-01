@@ -1,1044 +1,1003 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Миграция Telegram-ботов — Переезд на зарубежные серверы</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #3b82f6;
-            --secondary: #64748b;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --white: #ffffff;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--dark);
-            background: var(--light);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* Header */
-        .header {
-            background: var(--white);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .header-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 0;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--dark);
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .nav {
-            display: flex;
-            gap: 32px;
-        }
-
-        .nav a {
-            color: var(--secondary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav a:hover {
-            color: var(--primary);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 28px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-large {
-            padding: 16px 36px;
-            font-size: 1.1rem;
-        }
-
-        /* Badges */
-        .badges {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .badge-blue {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .badge-green {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        /* Hero */
-        .hero {
-            padding: 80px 0 60px;
-            background: linear-gradient(180deg, var(--white) 0%, var(--light) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 24px;
-            color: var(--dark);
-        }
-
-        .hero h1 span {
-            color: var(--primary);
-        }
-
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: var(--secondary);
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .hero-visual {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .server-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .server-box {
-            width: 280px;
-            height: 60px;
-            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            border-radius: 12px;
-            border: 2px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 12px;
-            box-shadow: var(--shadow);
-            position: relative;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .server-box:nth-child(2) { animation-delay: 0.5s; }
-        .server-box:nth-child(3) { animation-delay: 1s; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .server-led {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .server-text {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--secondary);
-        }
-
-        .arrow-down {
-            font-size: 2rem;
-            color: var(--primary);
-            margin: 8px 0;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(10px); }
-        }
-
-        .telegram-cloud {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #229ed9, #1c8bc1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 3rem;
-            box-shadow: var(--shadow-lg);
-            margin-top: 16px;
-        }
-
-        /* Problems */
-        .problems {
-            padding: 80px 0;
-            background: var(--white);
-        }
-
-        .section-header {
-            text-align: center;
-            max-width: 700px;
-            margin: 0 auto 60px;
-        }
-
-        .section-header h2 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--dark);
-        }
-
-        .section-header p {
-            font-size: 1.125rem;
-            color: var(--secondary);
-        }
-
-        .problems-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .problem-card {
-            background: var(--light);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s;
-        }
-
-        .problem-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-light);
-        }
-
-        .problem-icon {
-            width: 56px;
-            height: 56px;
-            background: #fee2e2;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-        }
-
-        .problem-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--dark);
-        }
-
-        .problem-card p {
-            color: var(--secondary);
-            line-height: 1.6;
-        }
-
-        /* Services */
-        .services {
-            padding: 80px 0;
-            background: var(--light);
-        }
-
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        .service-card {
-            background: var(--white);
-            border-radius: 16px;
-            padding: 32px;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .service-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary);
-            transform: scaleY(0);
-            transition: transform 0.3s;
-        }
-
-        .service-card:hover::before {
-            transform: scaleY(1);
-        }
-
-        .service-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-
-        .service-number {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            color: white;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-        }
-
-        .service-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--dark);
-        }
-
-        .service-card p {
-            color: var(--secondary);
-            line-height: 1.6;
-        }
-
-        /* Why Us */
-        .why-us {
-            padding: 80px 0;
-            background: var(--white);
-        }
-
-        .why-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
-        }
-
-        .why-card {
-            text-align: center;
-            padding: 40px 24px;
-            border-radius: 16px;
-            background: var(--light);
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-        }
-
-        .why-card:hover {
-            background: var(--white);
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-4px);
-        }
-
-        .why-icon {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            color: white;
-            font-size: 1.75rem;
-        }
-
-        .why-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--dark);
-        }
-
-        .why-card p {
-            color: var(--secondary);
-            line-height: 1.6;
-        }
-
-        /* Pricing */
-        .pricing {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: white;
-            text-align: center;
-        }
-
-        .pricing h2 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .pricing-subtitle {
-            font-size: 1.25rem;
-            opacity: 0.8;
-            margin-bottom: 40px;
-        }
-
-        .pricing-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 48px;
-            max-width: 600px;
-            margin: 0 auto;
-            backdrop-filter: blur(10px);
-        }
-
-        .pricing-label {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .pricing-desc {
-            opacity: 0.8;
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
-
-        /* Form */
-        .contact {
-            padding: 80px 0;
-            background: var(--light);
-        }
-
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: var(--white);
-            border-radius: 20px;
-            padding: 48px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border);
-        }
-
-        .form-container h2 {
-            text-align: center;
-            font-size: 1.875rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--dark);
-        }
-
-        .form-container .subtitle {
-            text-align: center;
-            color: var(--secondary);
-            margin-bottom: 32px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--dark);
-            font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.2s;
-            background: var(--white);
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-hint {
-            font-size: 0.875rem;
-            color: var(--secondary);
-            margin-top: 6px;
-        }
-
-        .form-submit {
-            width: 100%;
-            margin-top: 8px;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--dark);
-            color: white;
-            padding: 60px 0 32px;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 48px;
-            margin-bottom: 48px;
-        }
-
-        .footer-brand {
-            max-width: 320px;
-        }
-
-        .footer-brand .logo {
-            color: white;
-            margin-bottom: 16px;
-        }
-
-        .footer-brand p {
-            opacity: 0.7;
-            line-height: 1.6;
-        }
-
-        .footer h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: white;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 12px;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .footer-contact {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .footer-contact a {
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: color 0.2s;
-        }
-
-        .footer-contact a:hover {
-            color: white;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 24px;
-            text-align: center;
-            opacity: 0.5;
-            font-size: 0.875rem;
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            .hero-grid {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .hero-visual {
-                order: -1;
-            }
-
-            .server-box {
-                width: 240px;
-            }
-
-            .nav {
-                display: none;
-            }
-
-            .footer-grid {
-                grid-template-columns: 1fr;
-                gap: 32px;
-            }
-
-            .form-container {
-                padding: 32px 24px;
-            }
-
-            .pricing-card {
-                padding: 32px 24px;
-            }
-        }
-
-        /* Smooth scroll */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Selection */
-        ::selection {
-            background: var(--primary);
-            color: white;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGMove — Миграция Telegram-ботов за рубеж</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0A0D14;
+    --bg2: #111520;
+    --bg3: #161C2E;
+    --accent: #3E9BFF;
+    --accent2: #00E5B0;
+    --text: #F0F4FF;
+    --muted: #7A8599;
+    --border: rgba(255,255,255,0.08);
+    --card: rgba(255,255,255,0.04);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Mulish', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 3rem;
+    background: rgba(10,13,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+
+  nav ul {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  nav a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.85rem; font-weight: 500;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: var(--accent); color: #fff !important;
+    padding: 0.5rem 1.25rem; border-radius: 6px;
+    transition: background 0.2s, transform 0.15s !important;
+  }
+  .nav-cta:hover { background: #5aabff !important; transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: stretch;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-inner {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 8rem 3rem 6rem;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; top: -20%; right: -10%;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(62,155,255,0.12) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 30%;
+    width: 500px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,176,0.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(62,155,255,0.12);
+    border: 1px solid rgba(62,155,255,0.3);
+    color: var(--accent);
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 1.5rem;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .hero h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    max-width: 820px;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+  }
+
+  .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    font-weight: 600; font-size: 0.95rem;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { background: #5aabff; transform: translateY(-2px); }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.85rem 2rem;
+    border-radius: 8px;
+    font-weight: 500; font-size: 0.95rem;
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.25); background: var(--card); }
+
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 4rem;
+    position: relative; z-index: 1;
+  }
+  .stat-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1.8rem; font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-num.green { color: var(--accent2); }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* PROBLEM */
+  .section {
+    padding: 5rem 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-tag {
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent); margin-bottom: 0.75rem;
+  }
+
+  .section h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .section .lead {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin-bottom: 3rem;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .problem-card {
+    background: var(--bg2);
+    padding: 1.75rem;
+    transition: background 0.2s;
+  }
+  .problem-card:hover { background: var(--bg3); }
+
+  .problem-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,80,80,0.12);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .problem-card h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.9rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .problem-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+  /* SERVICES */
+  .services-wrapper { background: var(--bg2); }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .service-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .service-card:hover { border-color: rgba(62,155,255,0.3); transform: translateY(-3px); }
+
+  .service-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .service-card:hover::before { opacity: 1; }
+
+  .service-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  .service-card h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.95rem; font-weight: 700;
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .service-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+  .service-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 1rem;
+  }
+  .service-tags span {
+    font-size: 0.7rem; font-weight: 600;
+    background: rgba(62,155,255,0.1);
+    color: var(--accent);
+    padding: 3px 10px; border-radius: 100px;
+    letter-spacing: 0.02em;
+  }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0;
+    position: relative;
+  }
+  .steps::before {
+    content: '';
+    position: absolute;
+    top: 28px; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), var(--accent), var(--border), transparent);
+  }
+
+  .step {
+    padding: 0 1rem;
+    text-align: center;
+  }
+
+  .step-num {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    color: var(--accent);
+    position: relative; z-index: 1;
+  }
+
+  .step h4 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  .step p { font-size: 0.78rem; color: var(--muted); }
+
+  /* PRICING */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .price-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: transform 0.2s;
+  }
+  .price-card:hover { transform: translateY(-4px); }
+
+  .price-card.featured {
+    border-color: var(--accent);
+    background: rgba(62,155,255,0.05);
+    position: relative;
+  }
+
+  .popular-tag {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 4px 14px; border-radius: 100px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .price-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--muted); margin-bottom: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  .price-amount {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 2.2rem; font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .price-note { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .price-features { list-style: none; margin-bottom: 1.75rem; }
+  .price-features li {
+    font-size: 0.85rem; color: var(--muted);
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .price-features li:last-child { border-bottom: none; }
+  .price-features li::before {
+    content: '';
+    width: 16px; height: 16px; flex-shrink: 0;
+    background: rgba(0,229,176,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='%2300E5B0' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+    background-size: 10px 10px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .btn-full {
+    display: block; text-align: center;
+    padding: 0.8rem; border-radius: 8px;
+    font-weight: 600; font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-full.primary { background: var(--accent); color: #fff; }
+  .btn-full.primary:hover { background: #5aabff; }
+  .btn-full.outline { border: 1px solid var(--border); color: var(--text); }
+  .btn-full.outline:hover { border-color: rgba(255,255,255,0.25); background: var(--card); }
+
+  /* WHY */
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .why-list { list-style: none; }
+  .why-list li {
+    display: flex; gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .why-list li:last-child { border-bottom: none; }
+
+  .why-icon {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: rgba(62,155,255,0.1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+
+  .why-list h4 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.82rem; font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+  .why-list p { font-size: 0.82rem; color: var(--muted); }
+
+  .why-visual {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    font-family: 'Mulish', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+  .code-line { display: flex; gap: 1rem; }
+  .code-line .ln { color: rgba(255,255,255,0.15); min-width: 20px; text-align: right; }
+  .code-line .kw { color: #C792EA; }
+  .code-line .str { color: #C3E88D; }
+  .code-line .fn { color: #82AAFF; }
+  .code-line .cm { color: rgba(255,255,255,0.25); }
+  .code-header {
+    display: flex; gap: 6px;
+    margin-bottom: 1rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #FF5F56; }
+  .dot.y { background: #FFBD2E; }
+  .dot.g { background: #27C93F; }
+  .file-name { font-size: 0.7rem; color: var(--muted); margin-left: auto; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 1px; }
+  .faq-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .faq-q {
+    width: 100%; background: none; border: none; cursor: pointer;
+    padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Mulish', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text); text-align: left;
+    gap: 1rem;
+  }
+  .faq-arrow { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; flex-shrink: 0; }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+  .faq-a {
+    display: none;
+    padding: 0 1.5rem 1.25rem;
+    font-size: 0.88rem; color: var(--muted); line-height: 1.7;
+  }
+  .faq-item.open .faq-a { display: block; }
+
+  /* CTA */
+  .cta-section {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cta-inner {
+    max-width: 1100px; margin: 0 auto;
+    padding: 5rem 3rem;
+    display: flex;
+    gap: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .cta-inner h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 900; line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 500px;
+  }
+
+  .cta-inner h2 em { font-style: normal; color: var(--accent); }
+
+  .cta-form {
+    display: flex; flex-direction: column; gap: 0.75rem;
+    min-width: 300px; flex: 1; max-width: 420px;
+  }
+
+  .cta-form input, .cta-form textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    color: var(--text);
+    font-family: 'Mulish', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+  .cta-form input::placeholder, .cta-form textarea::placeholder { color: var(--muted); }
+  .cta-form input:focus, .cta-form textarea:focus { border-color: var(--accent); }
+
+  .cta-form button {
+    background: var(--accent);
+    color: #fff;
+    border: none; cursor: pointer;
+    padding: 0.9rem;
+    border-radius: 8px;
+    font-family: 'Mulish', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .cta-form button:hover { background: #5aabff; transform: translateY(-1px); }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer p { font-size: 0.78rem; color: var(--muted); }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { font-size: 0.78rem; color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--text); }
+
+  /* DIVIDER */
+  .section-divider {
+    max-width: 1100px; margin: 0 auto;
+    border: none; border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    nav ul { display: none; }
+    .hero-inner { padding: 7rem 1.5rem 4rem; }
+    .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+    .section { padding: 3.5rem 1.5rem; }
+    .steps::before { display: none; }
+    .steps { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .why-grid { grid-template-columns: 1fr; }
+    .why-visual { display: none; }
+    .cta-inner { padding: 3rem 1.5rem; }
+    footer { padding: 1.5rem; }
+  }
+</style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-inner">
-                <a href="#" class="logo">
-                    <div class="logo-icon">🚀</div>
-                    <span>BotRelocate</span>
-                </a>
-                <nav class="nav">
-                    <a href="#problems">Проблемы</a>
-                    <a href="#services">Услуги</a>
-                    <a href="#why">Почему мы</a>
-                    <a href="#contact">Контакты</a>
-                </nav>
-                <a href="#contact" class="btn btn-primary">Заказать расчёт</a>
-            </div>
+<nav>
+  <div class="logo">TG<span>Move</span></div>
+  <ul>
+    <li><a href="#services">Услуги</a></li>
+    <li><a href="#how">Как работает</a></li>
+    <li><a href="#pricing">Стоимость</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#contact" class="nav-cta">Оставить заявку</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="badge">Telegram API доступ</div>
+    <h1>Ваш бот снова<br>работает — <em>без сбоев</em><br>и без отдела IT</h1>
+    <p>Переносим Telegram-ботов с российских серверов на зарубежный хостинг. Под ключ: от кода до деплоя. За 3–7 дней.</p>
+    <div class="btn-group">
+      <a href="#contact" class="btn-primary">Оставить заявку →</a>
+      <a href="#services" class="btn-secondary">Что входит в услугу</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">3–7</div>
+        <div class="stat-label">Дней до запуска</div>
+      </div>
+      <div>
+        <div class="stat-num green">100%</div>
+        <div class="stat-label">Гарантия результата</div>
+      </div>
+      <div>
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Мониторинг бота</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section style="background: var(--bg2);">
+  <div class="section">
+    <div class="section-tag">Проблема</div>
+    <h2>Почему боты на российских<br>серверах перестают работать</h2>
+    <p class="lead">Российские IP-адреса блокируются серверами Telegram. Бот «пропадает» без предупреждения — и это бьёт по бизнесу.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🚫</div>
+        <h3>Блокировка API Telegram</h3>
+        <p>Серверы Telegram всё чаще отклоняют запросы с российских IP. Бот перестаёт отвечать клиентам.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">⏱️</div>
+        <h3>Потеря продаж и клиентов</h3>
+        <p>Каждый час простоя — пропущенные заявки, потерянные клиенты и репутационный ущерб.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🔧</div>
+        <h3>Нет своего DevOps</h3>
+        <p>Малый бизнес и ИП не могут позволить штатного DevOps-инженера. Нет ни времени, ни компетенций.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📉</div>
+        <h3>Нестабильность работы</h3>
+        <p>Бот «падает» в непредсказуемые моменты — ночью, в выходные — и некому его поднять.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<div id="services" class="services-wrapper">
+  <div class="section">
+    <div class="section-tag">Что входит в услугу</div>
+    <h2>Полный перенос<br>под ключ</h2>
+    <p class="lead">Вы передаёте нам доступ к боту — мы делаем всё остальное. Ни строчки кода с вашей стороны.</p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-num">01</div>
+        <h3>Перенос кода в репозиторий</h3>
+        <p>Переносим кодовую базу бота в GitHub или GitLab. Настраиваем ветки, права доступа, защиту кода. Вы получаете полное владение репозиторием.</p>
+        <div class="service-tags"><span>GitHub</span><span>GitLab</span><span>Git</span></div>
+      </div>
+      <div class="service-card">
+        <div class="service-num">02</div>
+        <h3>Документация бота</h3>
+        <p>Описываем архитектуру, зависимости, переменные окружения и логику работы. Понятно даже без технического опыта.</p>
+        <div class="service-tags"><span>README</span><span>Схема</span><span>Инструкции</span></div>
+      </div>
+      <div class="service-card">
+        <div class="service-num">03</div>
+        <h3>CI/CD пайплайн</h3>
+        <p>Настраиваем автоматическую сборку и деплой при каждом обновлении кода. Обновления — без ручного вмешательства.</p>
+        <div class="service-tags"><span>GitHub Actions</span><span>GitLab CI</span></div>
+      </div>
+      <div class="service-card">
+        <div class="service-num">04</div>
+        <h3>Зарубежный хостинг</h3>
+        <p>Подбираем и арендуем подходящий сервер в Европе или Азии. Берём на себя оплату и управление. Вы платите единую сумму без скрытых комиссий.</p>
+        <div class="service-tags"><span>Hetzner</span><span>DigitalOcean</span><span>Vultr</span></div>
+      </div>
+      <div class="service-card">
+        <div class="service-num">05</div>
+        <h3>Запуск и настройка бота</h3>
+        <p>Переносим бота на новый сервер, настраиваем окружение, проверяем стабильность работы. Сдаём «под ключ» с гарантией запуска.</p>
+        <div class="service-tags"><span>Docker</span><span>Systemd</span><span>PM2</span></div>
+      </div>
+      <div class="service-card">
+        <div class="service-num">06</div>
+        <h3>Мониторинг и поддержка</h3>
+        <p>Настраиваем уведомления о сбоях. Первый месяц сопровождения включён — реагируем на проблемы 24/7.</p>
+        <div class="service-tags"><span>Uptime мониторинг</span><span>Алерты</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW -->
+<div id="how">
+  <div class="section">
+    <div class="section-tag">Как это работает</div>
+    <h2>От заявки до работающего<br>бота за 3–7 дней</h2>
+    <p class="lead">Простой процесс без технических компетенций с вашей стороны.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Заявка и аудит</h4>
+        <p>Вы описываете бота. Мы оцениваем сложность и предлагаем тариф.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Доступ к коду</h4>
+        <p>Передаёте нам доступ к серверу или коду. Подписываем NDA по запросу.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Перенос и настройка</h4>
+        <p>Настраиваем репозиторий, хостинг, пайплайн и запускаем бота.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Тестирование</h4>
+        <p>Проверяем стабильность, все функции и работу Telegram API.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <h4>Сдача проекта</h4>
+        <p>Передаём вам все доступы. Бот работает. Документация готова.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- WHY US -->
+<div>
+  <div class="section">
+    <div class="section-tag">Почему мы</div>
+    <h2>Специализация —<br>не универсальность</h2>
+    <p class="lead">Мы не «IT-компания на все случаи». Мы занимаемся исключительно миграцией и поддержкой Telegram-ботов.</p>
+    <div class="why-grid">
+      <ul class="why-list">
+        <li>
+          <div class="why-icon">🔒</div>
+          <div>
+            <h4>NDA и конфиденциальность</h4>
+            <p>Подписываем соглашение о неразглашении. Ваш код и данные остаются у вас.</p>
+          </div>
+        </li>
+        <li>
+          <div class="why-icon">⚡</div>
+          <div>
+            <h4>Фиксированные сроки</h4>
+            <p>Стандартный бот — 3 рабочих дня. Сложные проекты — до 7 дней. Прописываем в договоре.</p>
+          </div>
+        </li>
+        <li>
+          <div class="why-icon">📋</div>
+          <div>
+            <h4>Договор и закрывающие документы</h4>
+            <p>Работаем официально. ИП и юридическим лицам выдаём полный пакет документов.</p>
+          </div>
+        </li>
+        <li>
+          <div class="why-icon">🛡️</div>
+          <div>
+            <h4>Гарантия запуска</h4>
+            <p>Если бот не заработает — возвращаем деньги или исправляем за свой счёт.</p>
+          </div>
+        </li>
+        <li>
+          <div class="why-icon">🌍</div>
+          <div>
+            <h4>Зарубежная инфраструктура</h4>
+            <p>Знаем, какие хостинги лучше работают с Telegram API. Не нужно разбираться самостоятельно.</p>
+          </div>
+        </li>
+      </ul>
+      <div class="why-visual">
+        <div class="code-header">
+          <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+          <div class="file-name">deploy.yml</div>
         </div>
-    </header>
-
-    <!-- Hero -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-grid">
-                <div class="hero-content">
-                    <div class="badges">
-                        <span class="badge badge-blue">🌍 Работаем с РФ и СНГ</span>
-                        <span class="badge badge-green">✓ Без посредников</span>
-                    </div>
-                    <h1>Миграция Telegram-ботов <span>на зарубежные серверы</span></h1>
-                    <p class="hero-subtitle">
-                        Восстановим стабильную работу ваших ботов. Перенесём код, настроим инфраструктуру и запустим 
-                        на надёжных зарубежных хостингах — берём все технические задачи на себя.
-                    </p>
-                    <div class="hero-cta">
-                        <a href="#contact" class="btn btn-primary btn-large">Заказать бесплатный расчёт</a>
-                        <a href="#services" class="btn btn-outline btn-large">Что входит в услугу</a>
-                    </div>
-                </div>
-                <div class="hero-visual">
-                    <div class="server-stack">
-                        <div class="server-box">
-                            <div class="server-led"></div>
-                            <span class="server-text">Российский сервер</span>
-                            <span style="margin-left:auto; font-size:1.2rem;">⚠️</span>
-                        </div>
-                        <div class="arrow-down">↓</div>
-                        <div class="server-box">
-                            <div class="server-led"></div>
-                            <span class="server-text">GitHub / GitLab</span>
-                            <span style="margin-left:auto; font-size:1.2rem;">🔄</span>
-                        </div>
-                        <div class="server-box">
-                            <div class="server-led"></div>
-                            <span class="server-text">CI/CD Pipeline</span>
-                            <span style="margin-left:auto; font-size:1.2rem;">⚙️</span>
-                        </div>
-                        <div class="arrow-down">↓</div>
-                        <div class="server-box">
-                            <div class="server-led"></div>
-                            <span class="server-text">Зарубежный VPS</span>
-                            <span style="margin-left:auto; font-size:1.2rem;">✓</span>
-                        </div>
-                        <div class="telegram-cloud">✈️</div>
-                    </div>
-                </div>
-            </div>
+        <div class="code-line"><span class="ln">1</span><span class="cm"># CI/CD пайплайн для бота</span></div>
+        <div class="code-line"><span class="ln">2</span><span class="kw">on:</span></div>
+        <div class="code-line"><span class="ln">3</span>&nbsp;&nbsp;<span class="kw">push:</span></div>
+        <div class="code-line"><span class="ln">4</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">branches:</span> [<span class="str">main</span>]</div>
+        <div class="code-line"><span class="ln">5</span></div>
+        <div class="code-line"><span class="ln">6</span><span class="kw">jobs:</span></div>
+        <div class="code-line"><span class="ln">7</span>&nbsp;&nbsp;<span class="fn">deploy:</span></div>
+        <div class="code-line"><span class="ln">8</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">runs-on:</span> <span class="str">ubuntu-latest</span></div>
+        <div class="code-line"><span class="ln">9</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">steps:</span></div>
+        <div class="code-line"><span class="ln">10</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="fn">uses:</span> <span class="str">actions/checkout@v4</span></div>
+        <div class="code-line"><span class="ln">11</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="kw">name:</span> <span class="str">Deploy to server</span></div>
+        <div class="code-line"><span class="ln">12</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">run:</span> <span class="str">./deploy.sh</span></div>
+        <div class="code-line"><span class="ln">13</span></div>
+        <div class="code-line"><span class="ln">14</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="kw">name:</span> <span class="str">Health check</span></div>
+        <div class="code-line"><span class="ln">15</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">run:</span> <span class="str">curl $BOT_URL/health</span></div>
+        <br>
+        <div style="padding: 0.75rem; background: rgba(0,229,176,0.08); border-radius: 6px; border: 1px solid rgba(0,229,176,0.15); font-size: 0.75rem; color: var(--accent2);">
+          ✓ Деплой успешен — бот запущен на EU-сервере
         </div>
-    </section>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- Problems -->
-    <section class="problems" id="problems">
-        <div class="container">
-            <div class="section-header">
-                <h2>С какими проблемами сталкиваются владельцы ботов</h2>
-                <p>Нестабильность российской инфраструктуры для Telegram API приводит к потере клиентов и прибыли</p>
-            </div>
-            <div class="problems-grid">
-                <div class="problem-card">
-                    <div class="problem-icon">🚫</div>
-                    <h3>Блокировки и ограничения</h3>
-                    <p>Telegram API периодически недоступен с российских IP-адресов. Бот перестаёт отвечать на сообщения, теряет заказы.</p>
-                </div>
-                <div class="problem-card">
-                    <div class="problem-icon">🐌</div>
-                    <h3>Замедление отклика</h3>
-                    <p>Высокий пинг и потери пакетов при обращении к api.telegram.org. Пользователи ждут ответ по 5–10 секунд.</p>
-                </div>
-                <div class="problem-card">
-                    <div class="problem-icon">💸</div>
-                    <h3>Прямые убытки</h3>
-                    <p>Каждая минута простоя — это недополученная выручка, недовольные клиенты и репутационные риски.</p>
-                </div>
-                <div class="problem-card">
-                    <div class="problem-icon">😰</div>
-                    <h3>Нет своего DevOps</h3>
-                    <p>Некому быстро разобраться в инфраструктуре, настроить прокси или перенести сервер в другое место.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- PRICING -->
+<div id="pricing" style="background: var(--bg2);">
+  <div class="section">
+    <div class="section-tag">Стоимость</div>
+    <h2>Прозрачные тарифы<br>без скрытых платежей</h2>
+    <p class="lead">Итоговая сумма включает перенос, настройку и первый месяц поддержки.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">Старт</div>
+        <div class="price-amount">от 15 000 ₽</div>
+        <div class="price-note">Простой бот · до 3 рабочих дней</div>
+        <ul class="price-features">
+          <li>Перенос кода в репозиторий</li>
+          <li>Базовая документация</li>
+          <li>Настройка сервера и запуск</li>
+          <li>1 месяц поддержки</li>
+          <li>1 сервис (бот + база)</li>
+        </ul>
+        <a href="#contact" class="btn-full outline">Оставить заявку</a>
+      </div>
 
-    <!-- Services -->
-    <section class="services" id="services">
-        <div class="container">
-            <div class="section-header">
-                <h2>Что входит в услугу</h2>
-                <p>Полный цикл миграции под ключ — от аудита кода до запуска в продакшене</p>
-            </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-number">01</div>
-                    <h3>Перенос кодовой базы</h3>
-                    <p>Создаём репозиторий на GitHub или GitLab, переносим исходный код, настраиваем .gitignore и структуру проекта. Ваш код будет под контролем версий.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-number">02</div>
-                    <h3>Документация по сервисам</h3>
-                    <p>Фиксируем все зависимости, переменные окружения, используемые API и базы данных. Составляем README для будущей поддержки.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-number">03</div>
-                    <h3>Настройка CI/CD</h3>
-                    <p>Пишем пайплайн для автоматической сборки и деплоя. Любое изменение в коде само попадает на сервер — без ручных действий.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-number">04</div>
-                    <h3>Аренда хостинга под ключ</h3>
-                    <p>Подбираем и оплачиваем зарубежный VPS или облачный сервер под вашу нагрузку. Регистрация, оплата, первичная настройка — всё берём на себя.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-number">05</div>
-                    <h3>Перенос и запуск</h3>
-                    <p>Разворачиваем бота на новом хосте, мигрируем базы данных, настраиваем домены и SSL. Проводим полное тестирование работоспособности.</p>
-                </div>
-                <div class="service-card" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
-                    <div class="service-number" style="background: var(--primary-dark);">+</div>
-                    <h3>Пост-миграционная поддержка</h3>
-                    <p><strong>3 дня бесплатной поддержки</strong> после запуска. Помогаем с мелкими доработками, отвечаем на вопросы, следим за стабильностью.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="price-card featured">
+        <div class="popular-tag">Популярный</div>
+        <div class="price-name">Бизнес</div>
+        <div class="price-amount">от 35 000 ₽</div>
+        <div class="price-note">Средний проект · до 5 рабочих дней</div>
+        <ul class="price-features">
+          <li>Полный перенос инфраструктуры</li>
+          <li>CI/CD пайплайн под ключ</li>
+          <li>Полная документация</li>
+          <li>Docker / контейнеризация</li>
+          <li>Мониторинг и алерты</li>
+          <li>2 месяца поддержки</li>
+          <li>До 5 сервисов</li>
+        </ul>
+        <a href="#contact" class="btn-full primary">Оставить заявку</a>
+      </div>
 
-    <!-- Why Us -->
-    <section class="why-us" id="why">
-        <div class="container">
-            <div class="section-header">
-                <h2>Почему именно мы</h2>
-                <p>Работаем с бизнесом, у которого нет собственного IT-отдела</p>
-            </div>
-            <div class="why-grid">
-                <div class="why-card">
-                    <div class="why-icon">🛡️</div>
-                    <h3>Не нужен свой DevOps</h3>
-                    <p>Мы — ваша внешняя команда инфраструктуры. Не требуем штатного сисадмина или программиста для сопровождения.</p>
-                </div>
-                <div class="why-card">
-                    <div class="why-icon">🔄</div>
-                    <h3>Бесшовный переезд</h3>
-                    <p>Минимальное время простоя — переносим и тестируем на новом сервере, пока старый работает. Переключаем за считанные минуты.</p>
-                </div>
-                <div class="why-card">
-                    <div class="why-icon">🌐</div>
-                    <h3>Помощь с доменами и прокси</h3>
-                    <p>Настроим Webhook, подключим прокси при необходимости, поможем с DNS и SSL-сертификатами.</p>
-                </div>
-                <div class="why-card">
-                    <div class="why-icon">🤝</div>
-                    <h3>Поддержка 3 дня после запуска</h3>
-                    <p>Не бросаем после миграции. На связи, чтобы убедиться, что всё работает идеально и ответить на вопросы.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="price-card">
+        <div class="price-name">Enterprise</div>
+        <div class="price-amount">по запросу</div>
+        <div class="price-note">Сложная архитектура · договорные сроки</div>
+        <ul class="price-features">
+          <li>Несколько ботов / микросервисы</li>
+          <li>Кастомная инфраструктура</li>
+          <li>NDA и договор</li>
+          <li>Закрывающие документы</li>
+          <li>Постоянная техподдержка</li>
+          <li>SLA с гарантией uptime</li>
+        </ul>
+        <a href="#contact" class="btn-full outline">Обсудить проект</a>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top: 1.5rem; font-size: 0.8rem; color: var(--muted);">Аренда хостинга (от €5/мес) оплачивается отдельно и передаётся вам в управление</p>
+  </div>
+</div>
 
-    <!-- Pricing -->
-    <section class="pricing">
-        <div class="container">
-            <h2>Стоимость миграции</h2>
-            <p class="pricing-subtitle">Индивидуальный расчёт под вашего бота</p>
-            <div class="pricing-card">
-                <div class="pricing-label">Под ключ</div>
-                <p class="pricing-desc">
-                    Стоимость зависит от сложности бота, объёма данных и требуемой инфраструктуры. 
-                    Оставьте заявку — рассчитаем точную цену и сроки в течение часа.
-                </p>
-                <a href="#contact" class="btn btn-primary btn-large" style="background: white; color: var(--primary);">Заказать расчёт стоимости</a>
-            </div>
-        </div>
-    </section>
+<!-- FAQ -->
+<div id="faq">
+  <div class="section">
+    <div class="section-tag">Вопросы и ответы</div>
+    <h2>Часто задаваемые<br>вопросы</h2>
+    <p class="lead" style="margin-bottom: 2rem;">Если не нашли ответа — напишите нам напрямую.</p>
 
-    <!-- Contact Form -->
-    <section class="contact" id="contact">
-        <div class="container">
-            <div class="form-container">
-                <h2>Заказать бесплатный расчёт</h2>
-                <p class="subtitle">Расскажите о вашем боте — подготовим план и смету</p>
-                <form id="leadForm">
-                    <div class="form-group">
-                        <label for="name">Ваше имя</label>
-                        <input type="text" id="name" name="name" placeholder="Иван Петров" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact">Телефон или Telegram</label>
-                        <input type="text" id="contactInput" name="contact" placeholder="+7 (999) 000-00-00 или @username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="load">Примерная нагрузка бота</label>
-                        <select id="load" name="load" required>
-                            <option value="" disabled selected>Выберите вариант</option>
-                            <option value="low">До 100 пользователей / до 1 RPS</option>
-                            <option value="medium">100–1000 пользователей / 1–10 RPS</option>
-                            <option value="high">1000–10 000 пользователей / 10–100 RPS</option>
-                            <option value="enterprise">Более 10 000 пользователей / 100+ RPS</option>
-                            <option value="unknown">Не знаю, нужна консультация</option>
-                        </select>
-                        <p class="form-hint">RPS — запросов в секунду к API Telegram</p>
-                    </div>
-                    <div class="form-group">
-                        <label for="details">Дополнительная информация</label>
-                        <textarea id="details" name="details" placeholder="На каком языке написан бот? Есть ли база данных? Какие проблемы испытываете сейчас?"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-large form-submit">Отправить заявку</button>
-                </form>
-            </div>
-        </div>
-    </section>
+    <div class="faq-list">
+      <div class="faq-item open">
+        <button class="faq-q">
+          Нужно ли мне разбираться в программировании?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Нет. Мы делаем всё за вас. Вам нужно только предоставить доступ к текущему серверу или коду бота и ответить на несколько вопросов о его функционале. Всё остальное — наша работа.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Что будет с моими данными и кодом?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Мы подписываем NDA по запросу. Код бота и данные пользователей остаются в вашей собственности. После переноса вы получаете полный доступ к репозиторию и серверу — мы не оставляем себе никаких «бэкдоров».</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Мой бот написан на Python / Node.js / PHP — вы справитесь?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Да. Мы работаем с ботами на любом языке: Python (aiogram, python-telegram-bot), Node.js (Telegraf, Grammy), PHP, Go и другими. Если у вас нестандартная ситуация — уточните при подаче заявки.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Бот будет недоступен во время переноса?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Мы организуем перенос так, чтобы downtime был минимальным — как правило, не более 15–30 минут. Для критичных проектов планируем перенос в ночное время или выходные.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Вы выдаёте документы для бухгалтерии?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Да. Работаем официально: договор, акт выполненных работ, счёт. Подходит для ИП и юридических лиц. Возможна оплата по безналичному расчёту.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Что будет, если бот не заработает на новом хосте?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">Мы гарантируем результат. Если бот не запустится по нашей вине — исправляем за свой счёт или возвращаем деньги. Условия фиксируем в договоре.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="#" class="logo">
-                        <div class="logo-icon">🚀</div>
-                        <span>BotRelocate</span>
-                    </a>
-                    <p>Миграция Telegram-ботов на зарубежные серверы под ключ. Работаем с бизнесом из РФ и СНГ без посредников.</p>
-                </div>
-                <div class="footer-nav">
-                    <h4>Навигация</h4>
-                    <ul class="footer-links">
-                        <li><a href="#problems">Проблемы</a></li>
-                        <li><a href="#services">Услуги</a></li>
-                        <li><a href="#why">Почему мы</a></li>
-                        <li><a href="#contact">Расчёт стоимости</a></li>
-                    </ul>
-                </div>
-                <div class="footer-nav">
-                    <h4>Контакты</h4>
-                    <div class="footer-contact">
-                        <a href="https://t.me/migrate_bot_help" target="_blank">
-                            <span>📱</span> Telegram: @migrate_bot_help
-                        </a>
-                        <a href="mailto:hello@botrelocate.dev">
-                            <span>✉️</span> hello@botrelocate.dev
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2026 BotRelocate. Все права защищены. Работаем с РФ и СНГ. Без посредников.</p>
-            </div>
-        </div>
-    </footer>
+<!-- CTA -->
+<div id="contact" class="cta-section">
+  <div class="cta-inner">
+    <div>
+      <div class="section-tag">Оставить заявку</div>
+      <h2>Запустим вашего бота<br>на <em>зарубежном сервере</em><br>за 3–7 дней</h2>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">Отвечаем в течение 2 часов в рабочее время.<br>Также можно написать в Telegram: <a href="https://t.me/" style="color: var(--accent); text-decoration: none;">@tgmove_support</a></p>
+    </div>
+    <form class="cta-form" onsubmit="handleSubmit(event)">
+      <input type="text" placeholder="Ваше имя или название компании" id="form-name" required>
+      <input type="text" placeholder="Telegram или Email для связи" id="form-contact" required>
+      <textarea placeholder="Расскажите о боте: что делает, на чём написан, в чём проблема" rows="4" id="form-desc"></textarea>
+      <button type="submit" id="form-btn">Отправить заявку →</button>
+    </form>
+  </div>
+</div>
 
-    <script>
-        document.getElementById('leadForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+<footer>
+  <div class="logo">TG<span>Move</span></div>
+  <p>© 2025 TGMove. Миграция Telegram-ботов под ключ.</p>
+  <div class="footer-links">
+    <a href="#services">Услуги</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="#contact">Контакты</a>
+  </div>
+</footer>
 
-            const formData = {
-                name: document.getElementById('name').value,
-                contact: document.getElementById('contactInput').value,
-                load: document.getElementById('load').value,
-                details: document.getElementById('details').value,
-                timestamp: new Date().toISOString()
-            };
+<script>
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
 
-            console.log('Заявка получена:', formData);
-            alert('Заявка принята, ответ в течение часа');
+function handleSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('form-btn');
+  btn.textContent = 'Отправляю...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '✓ Заявка отправлена! Свяжемся в течение 2 часов';
+    btn.style.background = 'var(--accent2)';
+  }, 1200);
+}
 
-            this.reset();
-        });
-
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-    </script>
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+</script>
 
 </body>
 </html>
