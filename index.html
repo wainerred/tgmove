@@ -980,15 +980,37 @@ document.querySelectorAll('.faq-q').forEach(btn => {
   });
 });
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('form-btn');
   btn.textContent = 'Отправляю...';
   btn.disabled = true;
-  setTimeout(() => {
-    btn.textContent = '✓ Заявка отправлена! Свяжемся в течение 2 часов';
-    btn.style.background = 'var(--accent2)';
-  }, 1200);
+
+  const name = document.getElementById('form-name').value;
+  const contact = document.getElementById('form-contact').value;
+  const description = document.getElementById('form-desc').value;
+
+  try {
+    const res = await fetch('https://telegram-bot-proxy.wainerred.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, contact, description }),
+    });
+
+    if (res.ok) {
+      btn.textContent = '✓ Заявка отправлена! Свяжемся в течение 2 часов';
+      btn.style.background = 'var(--accent2)';
+      document.getElementById('form-name').value = '';
+      document.getElementById('form-contact').value = '';
+      document.getElementById('form-desc').value = '';
+    } else {
+      throw new Error();
+    }
+  } catch {
+    btn.textContent = '❌ Ошибка. Напишите нам напрямую в Telegram';
+    btn.style.background = '#ff5f56';
+    btn.disabled = false;
+  }
 }
 
 document.querySelectorAll('a[href^="#"]').forEach(a => {
