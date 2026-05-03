@@ -1,4 +1,4 @@
-name: Deploy to Selectel S3
+name: Deploy to Yandex Cloud S3
 
 on:
   push:
@@ -13,15 +13,14 @@ jobs:
       - name: Install AWS CLI
         run: pip install awscli
 
-      - name: Deploy to Selectel S3
+      - name: Deploy to Yandex Object Storage
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.SELECTEL_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SELECTEL_SECRET_KEY }}
-          AWS_DEFAULT_REGION: ru-3
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
         run: |
-          aws s3 sync . s3://tgmove \
-            --endpoint-url https://s3.ru-7.storage.selcloud.ru \
-            --no-verify-ssl \
+          aws s3 sync . s3://${{ secrets.YC_BUCKET }} \
+            --endpoint-url https://storage.yandexcloud.net \
             --delete \
             --exclude ".git/*" \
             --exclude ".github/*"
