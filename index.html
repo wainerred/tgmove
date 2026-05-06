@@ -6,6 +6,7 @@
 <title>TGMove — Миграция Telegram-ботов за рубеж</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -565,6 +566,13 @@
     transition: background 0.2s, transform 0.15s;
   }
   .cta-form button:hover { background: #5aabff; transform: translateY(-1px); }
+  .captcha-wrap {
+    min-height: 66px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.25rem 0;
+  }
 
   /* FOOTER */
   footer {
@@ -955,6 +963,9 @@
       <input type="text" placeholder="Ваше имя или название компании" id="form-name" required>
       <input type="text" placeholder="Telegram или Email для связи" id="form-contact" required>
       <textarea placeholder="Расскажите о боте: что делает, на чём написан, в чём проблема" rows="4" id="form-desc"></textarea>
+      <div class="captcha-wrap">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADJ-0lywVZatr414" data-theme="dark"></div>
+      </div>
       <button type="submit" id="form-btn">Отправить заявку →</button>
     </form>
   </div>
@@ -989,12 +1000,19 @@ async function handleSubmit(e) {
   const name = document.getElementById('form-name').value;
   const contact = document.getElementById('form-contact').value;
   const description = document.getElementById('form-desc').value;
+  const token = document.querySelector('#contact [name="cf-turnstile-response"]')?.value;
+
+  if (!token) {
+    btn.textContent = 'Подтвердите, что вы не робот';
+    btn.disabled = false;
+    return;
+  }
 
   try {
     const res = await fetch('https://telegram-bot-proxy.wainerred.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, contact, description }),
+      body: JSON.stringify({ name, contact, description, turnstileToken: token }),
     });
 
     if (res.ok) {
@@ -1003,6 +1021,7 @@ async function handleSubmit(e) {
       document.getElementById('form-name').value = '';
       document.getElementById('form-contact').value = '';
       document.getElementById('form-desc').value = '';
+      if (window.turnstile) window.turnstile.reset();
     } else {
       throw new Error();
     }
@@ -1010,6 +1029,7 @@ async function handleSubmit(e) {
     btn.textContent = '❌ Ошибка. Напишите нам напрямую в Telegram';
     btn.style.background = '#ff5f56';
     btn.disabled = false;
+    if (window.turnstile) window.turnstile.reset();
   }
 }
 
